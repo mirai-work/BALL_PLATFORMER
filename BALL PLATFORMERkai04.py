@@ -131,10 +131,7 @@ class Game:
       except ImportError:
         pass
 
-    # スマホ環境以外（PC等）の場合はマウスを表示する
-    if not s.is_smartphone:
-      pyxel.mouse(True)
-
+ 
     s.build_textures()
     s.init_audio()
     s.current_stage = 0
