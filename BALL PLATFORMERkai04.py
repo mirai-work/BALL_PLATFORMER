@@ -43,7 +43,7 @@ levels = [
         "#....########...C...####     #44.#     #..####",
         "#1111###################     #44##     #     #",
         "#    #     222         #     #44.#     #     #",
-        "#    #     222         #     #44.#     ##### #",
+        "#    #     222         #     #44.#     #     #",
         "#    #     222         #     #44.#11111#   22#",
         "#1111...########...#111#     #44.#     #     #",
         "####################111#     #44.#     #.#   #",
@@ -118,20 +118,6 @@ class Game:
 
   def __init__(s):
     pyxel.init(256, 160, title="BALL PLATFORMER NORMAL EDITION", display_scale=4)
-    
-    # スマホ環境の判定（Pyxel Web Launcher等を使用した場合）
-    s.is_smartphone = False
-    if sys.platform == "emscripten":
-      try:
-        import js
-        ua = js.navigator.userAgent.lower()
-        # ユーザーエージェントにスマホ系の文字列が含まれているかチェック
-        if "iphone" in ua or "ipad" in ua or "ipod" in ua or "android" in ua:
-          s.is_smartphone = True
-      except ImportError:
-        pass
-
- 
     s.build_textures()
     s.init_audio()
     s.current_stage = 0
@@ -584,76 +570,51 @@ class Game:
     pyxel.rectb(x + 2, y + 2, w - 4, h - 4, border_col3)
     s.draw_trans_rect(x + 3, y + 3, w - 6, h - 6, 0)
 
-  def btn(s, k, g, t_x, t_y, t_w, t_h, p=False):
-    t = False
-    if s.is_smartphone:
-      if p:
-        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
-          t = (
-              t_x <= pyxel.mouse_x <= t_x + t_w
-              and t_y <= pyxel.mouse_y <= t_y + t_h
-          )
-        return pyxel.btnp(k) or pyxel.btnp(g) or t
-      else:
-        if pyxel.btn(pyxel.MOUSE_BUTTON_LEFT):
-          t = (
-              t_x <= pyxel.mouse_x <= t_x + t_w
-              and t_y <= pyxel.mouse_y <= t_y + t_h
-          )
-        return pyxel.btn(k) or pyxel.btn(g) or t
+  def btn(s, k, g, p=False):
+    if p:
+      return pyxel.btnp(k) or pyxel.btnp(g)
     else:
-      if p:
-        return pyxel.btnp(k) or pyxel.btnp(g)
-      else:
-        return pyxel.btn(k) or pyxel.btn(g)
+      return pyxel.btn(k) or pyxel.btn(g)
 
   def b_L(s):
     return (
         (pyxel.frame_count % 120 < 60)
         if s.game_state == "title"
-        else s.btn(
-            pyxel.KEY_LEFT, pyxel.GAMEPAD1_BUTTON_DPAD_LEFT, 5, 130, 30, 25
-        )
+        else s.btn(pyxel.KEY_LEFT, pyxel.GAMEPAD1_BUTTON_DPAD_LEFT)
     )
 
   def b_R(s):
     return (
         (60 <= pyxel.frame_count % 120 < 120)
         if s.game_state == "title"
-        else s.btn(
-            pyxel.KEY_RIGHT, pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT, 45, 130, 30, 25
-        )
+        else s.btn(pyxel.KEY_RIGHT, pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT)
     )
 
   def b_U(s):
-    return s.btn(pyxel.KEY_UP, pyxel.GAMEPAD1_BUTTON_DPAD_UP, 0, 0, 0, 0)
+    return s.btn(pyxel.KEY_UP, pyxel.GAMEPAD1_BUTTON_DPAD_UP)
 
   def b_D(s):
     return (
         False
         if s.game_state == "title"
-        else s.btn(
-            pyxel.KEY_DOWN, pyxel.GAMEPAD1_BUTTON_DPAD_DOWN, 45, 140, 30, 20
-        )
+        else s.btn(pyxel.KEY_DOWN, pyxel.GAMEPAD1_BUTTON_DPAD_DOWN)
     )
 
   def b_J(s, p):
     return (
         (pyxel.frame_count % 45 == 0)
         if s.game_state == "title"
-        else s.btn(
-            pyxel.KEY_SPACE, pyxel.GAMEPAD1_BUTTON_A, 210, 125, 40, 25, p
-        )
+        else s.btn(pyxel.KEY_SPACE, pyxel.GAMEPAD1_BUTTON_A, p)
     )
 
   def b_A(s):
     return (
-        s.btn(pyxel.KEY_SPACE, pyxel.GAMEPAD1_BUTTON_A, 0, 0, 256, 160, True)
+        s.btn(pyxel.KEY_SPACE, pyxel.GAMEPAD1_BUTTON_A, True)
         or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_START)
     )
 
   def b_Rt(s):
-    return s.btn(pyxel.KEY_R, pyxel.GAMEPAD1_BUTTON_Y, 220, 3, 30, 14, True)
+    return s.btn(pyxel.KEY_R, pyxel.GAMEPAD1_BUTTON_Y, True)
 
   def load_level(s, from_checkpoint=False):
     s.tiles = []
@@ -1293,16 +1254,6 @@ class Game:
       w = 16 if p.dir == 1 else -16
     pyxel.blt(p.x - 2 - s.cam_x, p.y - 2 - s.cam_y, 0, u, 0, w, 16, 13)
 
-  def draw_ui(s):
-    pyxel.rectb(5, 130, 30, 25, 5)
-    s.text_s(17, 138, "<", 7)
-    pyxel.rectb(45, 130, 30, 25, 5)
-    s.text_s(57, 138, ">", 7)
-    pyxel.rectb(210, 125, 40, 25, 5)
-    s.text_s(220, 133, "JUMP", 7)
-    pyxel.rectb(220, 3, 30, 14, 5)
-    s.text_s(231, 6, "RET", 7)
-
   def draw(s):
     s.draw_bg()
     s.draw_poles()
@@ -1344,16 +1295,6 @@ class Game:
     s.text_s(96, 5, f"STAGE {s.current_stage + 1}", 10)
     time_sec = max(0, int(s.time_limit // 30))
     s.text_s(184, 5, f"TIME LIMIT:{time_sec:03d}", 9)
-
-    if (
-        s.game_state == "play"
-        and not s.is_cleared
-        and not s.is_gameover
-        and not s.all_cleared
-    ):
-      # スマホ環境のときのみUIを描画する
-      if s.is_smartphone:
-        s.draw_ui()
 
     if s.is_gameover:
       s.draw_window_box(38, 50, 180, 62, 2, 8, 1)
