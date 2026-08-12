@@ -1285,7 +1285,7 @@ class Game:
       s.text_s(92, 92, "NORMAL EDITION", 3)
 
       c = 11 if pyxel.frame_count % 30 < 15 else 7
-      s.text_s(65, 116, "- PUSH SPACE(START) BUTTON! -", c)
+      s.text_s(65, 116, "- PUSH START OR SPACE BUTTON! -", c)
       s.text_s(85, 130, "(C) 2026 MIRAI WORK", 13)
       return
 
@@ -1301,7 +1301,7 @@ class Game:
       c = 8 if pyxel.frame_count % 30 < 15 else 7
       s.text_s(90, 64, "GAME OVER", c)
       s.text_s(60, 82, "CONTINUE OR RETRY?", 7)
-      s.text_s(52, 96, "PRESS R/Y OR SPACE KEY", 6)
+      s.text_s(52, 96, "PRESS START OR SPACE KEY!", 6)
 
     if s.is_cleared and not s.all_cleared:
       s.draw_window_box(38, 55, 180, 48, 11, 12, 3)
