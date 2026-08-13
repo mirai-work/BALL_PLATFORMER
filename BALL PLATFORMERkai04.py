@@ -2,6 +2,9 @@ import math
 import sys
 import pyxel
 
+# --- 日本語フォントの設定 ---
+FONT_FILE = "misaki_gothic.bdf"
+
 TILE = 16
 GRAVITY = 0.35
 MOVE_SPEED = 2.2
@@ -43,7 +46,7 @@ levels = [
         "#....########...C...####     #44.#     #..####",
         "#1111###################     #44##     #     #",
         "#    #     222         #     #44.#     #     #",
-        "#    #     222         #     #44.#     #     #",
+        "#    #     222         #     #44.#     ##### #",
         "#    #     222         #     #44.#11111#   22#",
         "#1111...########...#111#     #44.#     #     #",
         "####################111#     #44.#     #.#   #",
@@ -118,6 +121,24 @@ class Game:
 
   def __init__(s):
     pyxel.init(256, 160, title="BALL PLATFORMER NORMAL EDITION", display_scale=4)
+# --- 日本語フォントの読み込み ---
+    try:
+      s.font = pyxel.Font(FONT_FILE)
+    except:
+      s.font = None    
+    # スマホ環境の判定（Pyxel Web Launcher等を使用した場合）
+    s.is_smartphone = False
+    if sys.platform == "emscripten":
+      try:
+        import js
+        ua = js.navigator.userAgent.lower()
+        # ユーザーエージェントにスマホ系の文字列が含まれているかチェック
+        if "iphone" in ua or "ipad" in ua or "ipod" in ua or "android" in ua:
+          s.is_smartphone = True
+      except ImportError:
+        pass
+
+ 
     s.build_textures()
     s.init_audio()
     s.current_stage = 0
@@ -555,8 +576,12 @@ class Game:
       pyxel.play(3, 5, loop=True)
 
   def text_s(s, x, y, t, c):
-    pyxel.text(x + 1, y + 1, t, 0)
-    pyxel.text(x, y, t, c)
+    if s.font:
+      pyxel.text(x + 1, y + 1, t, 0, s.font)
+      pyxel.text(x, y, t, c, s.font)
+    else:
+      pyxel.text(x + 1, y + 1, t, 0)
+      pyxel.text(x, y, t, c)
 
   def draw_trans_rect(s, x, y, w, h, col):
     for py in range(y, y + h):
@@ -570,51 +595,76 @@ class Game:
     pyxel.rectb(x + 2, y + 2, w - 4, h - 4, border_col3)
     s.draw_trans_rect(x + 3, y + 3, w - 6, h - 6, 0)
 
-  def btn(s, k, g, p=False):
-    if p:
-      return pyxel.btnp(k) or pyxel.btnp(g)
+  def btn(s, k, g, t_x, t_y, t_w, t_h, p=False):
+    t = False
+    if s.is_smartphone:
+      if p:
+        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
+          t = (
+              t_x <= pyxel.mouse_x <= t_x + t_w
+              and t_y <= pyxel.mouse_y <= t_y + t_h
+          )
+        return pyxel.btnp(k) or pyxel.btnp(g) or t
+      else:
+        if pyxel.btn(pyxel.MOUSE_BUTTON_LEFT):
+          t = (
+              t_x <= pyxel.mouse_x <= t_x + t_w
+              and t_y <= pyxel.mouse_y <= t_y + t_h
+          )
+        return pyxel.btn(k) or pyxel.btn(g) or t
     else:
-      return pyxel.btn(k) or pyxel.btn(g)
+      if p:
+        return pyxel.btnp(k) or pyxel.btnp(g)
+      else:
+        return pyxel.btn(k) or pyxel.btn(g)
 
   def b_L(s):
     return (
         (pyxel.frame_count % 120 < 60)
         if s.game_state == "title"
-        else s.btn(pyxel.KEY_LEFT, pyxel.GAMEPAD1_BUTTON_DPAD_LEFT)
+        else s.btn(
+            pyxel.KEY_LEFT, pyxel.GAMEPAD1_BUTTON_DPAD_LEFT, 5, 130, 30, 25
+        )
     )
 
   def b_R(s):
     return (
         (60 <= pyxel.frame_count % 120 < 120)
         if s.game_state == "title"
-        else s.btn(pyxel.KEY_RIGHT, pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT)
+        else s.btn(
+            pyxel.KEY_RIGHT, pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT, 45, 130, 30, 25
+        )
     )
 
   def b_U(s):
-    return s.btn(pyxel.KEY_UP, pyxel.GAMEPAD1_BUTTON_DPAD_UP)
+    return s.btn(pyxel.KEY_UP, pyxel.GAMEPAD1_BUTTON_DPAD_UP, 0, 0, 0, 0)
 
   def b_D(s):
     return (
         False
         if s.game_state == "title"
-        else s.btn(pyxel.KEY_DOWN, pyxel.GAMEPAD1_BUTTON_DPAD_DOWN)
+        else s.btn(
+            pyxel.KEY_DOWN, pyxel.GAMEPAD1_BUTTON_DPAD_DOWN, 45, 140, 30, 20
+        )
     )
 
   def b_J(s, p):
     return (
         (pyxel.frame_count % 45 == 0)
         if s.game_state == "title"
-        else s.btn(pyxel.KEY_SPACE, pyxel.GAMEPAD1_BUTTON_A, p)
+        else s.btn(
+            pyxel.KEY_SPACE, pyxel.GAMEPAD1_BUTTON_A, 210, 125, 40, 25, p
+        )
     )
 
   def b_A(s):
     return (
-        s.btn(pyxel.KEY_SPACE, pyxel.GAMEPAD1_BUTTON_A, True)
+        s.btn(pyxel.KEY_SPACE, pyxel.GAMEPAD1_BUTTON_A, 0, 0, 256, 160, True)
         or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_START)
     )
 
   def b_Rt(s):
-    return s.btn(pyxel.KEY_R, pyxel.GAMEPAD1_BUTTON_Y, True)
+    return s.btn(pyxel.KEY_R, pyxel.GAMEPAD1_BUTTON_Y, 220, 3, 30, 14, True)
 
   def load_level(s, from_checkpoint=False):
     s.tiles = []
@@ -1254,6 +1304,16 @@ class Game:
       w = 16 if p.dir == 1 else -16
     pyxel.blt(p.x - 2 - s.cam_x, p.y - 2 - s.cam_y, 0, u, 0, w, 16, 13)
 
+  def draw_ui(s):
+    pyxel.rectb(5, 130, 30, 25, 5)
+    s.text_s(17, 138, "<", 7)
+    pyxel.rectb(45, 130, 30, 25, 5)
+    s.text_s(57, 138, ">", 7)
+    pyxel.rectb(210, 125, 40, 25, 5)
+    s.text_s(220, 133, "JUMP", 7)
+    pyxel.rectb(220, 3, 30, 14, 5)
+    s.text_s(231, 6, "RET", 7)
+
   def draw(s):
     s.draw_bg()
     s.draw_poles()
@@ -1278,60 +1338,70 @@ class Game:
       pyxel.rectb(24, 22, 208, 116, 7)
 
       s.text_s(92, 34, "T.K PRESENTS", 6)
-      s.text_s(88, 48, "BALL PLATFORMER", 10)
-      s.text_s(90, 49, "BALL PLATFORMER", 7)
+      s.text_s(68, 48, "ボール　プラットフォーマー", 10)
+      s.text_s(70, 49, "ボール　プラットフォーマー", 7)
 
-      s.text_s(75, 75, "PUSH BALLS TO THE GOAL!", 9)
-      s.text_s(92, 92, "NORMAL EDITION", 3)
+      s.text_s(65, 75, "ボールを押してゴールを目指せ！", 9)
+      s.text_s(102, 92, "ノーマル版", 3)
 
       c = 11 if pyxel.frame_count % 30 < 15 else 7
-      s.text_s(65, 116, "- PUSH START OR SPACE BUTTON! -", c)
-      s.text_s(85, 130, "(C) 2026 MIRAI WORK", 13)
+      s.text_s(65, 116, "-SPACE(START)ボタン押してね! -", c)
+      s.text_s(85, 130, "(C)2026みらいワーク", 13)
       return
 
     pyxel.rect(0, 0, 256, 18, 0)
     pyxel.rectb(0, 0, 256, 18, 6)
-    s.text_s(6, 5, f"SCORE:{s.score:05d}", 7)
-    s.text_s(96, 5, f"STAGE {s.current_stage + 1}", 10)
+    s.text_s(6, 5, f"点数:{s.score:05d}", 7)
+    s.text_s(96, 5, f"ステージ {s.current_stage + 1}", 10)
     time_sec = max(0, int(s.time_limit // 30))
-    s.text_s(184, 5, f"TIME LIMIT:{time_sec:03d}", 9)
+    s.text_s(184, 5, f"残り時間:{time_sec:03d}", 9)
+
+    if (
+        s.game_state == "play"
+        and not s.is_cleared
+        and not s.is_gameover
+        and not s.all_cleared
+    ):
+      # スマホ環境のときのみUIを描画する
+      if s.is_smartphone:
+        s.draw_ui()
 
     if s.is_gameover:
       s.draw_window_box(38, 50, 180, 62, 2, 8, 1)
       c = 8 if pyxel.frame_count % 30 < 15 else 7
-      s.text_s(90, 64, "GAME OVER", c)
-      s.text_s(60, 82, "CONTINUE OR RETRY?", 7)
-      s.text_s(52, 96, "PRESS START OR SPACE KEY!", 6)
+      s.text_s(90, 64, "残念！", c)
+      s.text_s(60, 82, "もう一度プレイする?", 7)
+      s.text_s(52, 96, "R/YかSPACE 押してね！", 6)
 
     if s.is_cleared and not s.all_cleared:
       s.draw_window_box(38, 55, 180, 48, 11, 12, 3)
       c = 10 if pyxel.frame_count % 30 < 15 else 7
       dy = int(math.sin(pyxel.frame_count * 0.15) * 2)
-      s.text_s(86, 67 + dy, "STAGE CLEAR!", c)
-      s.text_s(64, 83 + dy, f"STAGE {s.current_stage+1} COMPLETED", 7)
+      s.text_s(86, 67 + dy, "おめでとう!", c)
+      s.text_s(64, 83 + dy, f"ステージ{s.current_stage+1} クリア！", 7)
 
     if s.all_cleared == 1:
       s.draw_window_box(24, 26, 208, 112, 9, 10, 8)
 
       pyxel.clip(28, 30, 200, 104)
       credits_list = [
-          "CONGRATULATIONS!",
+          "全クリアおめでとう!",
           "",
-          "BALL PLATFORMER",
+          "ボール　プラットフォーマー",
           "",
-          "- CREDITS -",
+          "- スタッフ -",
           "",
-          "SUPER VISION",
+          "スーパーバイザー",
           "TEAM T.D",
           "",
-          "GAME DESIGN & DIRECTION",
+          "ゲームコンセプト・プログラム",
           "T.K",
           "",
-          "ARRANGEMENT",
+          "アレンジ",
           "M.T",
           "",
-          "PRODUCED BY",
-          "(c)MIRAI WORK ",
+          "制作著作",
+          "(c)みらいワーク ",
           "",
           "T.K/M.T 2026",
       ]
@@ -1344,21 +1414,21 @@ class Game:
       pyxel.clip()
 
       c = 11 if pyxel.frame_count % 30 < 15 else 7
-      s.text_s(76, 120, "THANK YOU FOR PLAYING!", c)
+      s.text_s(76, 120, "最後までのプレイありがとう!", c)
 
     elif s.all_cleared == 2:
       s.draw_window_box(24, 26, 208, 112, 9, 10, 8)
 
       c = 11 if pyxel.frame_count % 30 < 15 else 7
-      s.text_s(104, 46, "RESULT", c)
+      s.text_s(104, 46, "スコアボード", c)
 
-      s.text_s(64, 70, f"HIGH SCORE : {s.high_score:05d}", 7)
+      s.text_s(64, 70, f"ハイスコア : {s.high_score:05d}", 7)
       total_sec = s.total_time // 30
       m = total_sec // 60
       sec = total_sec % 60
-      s.text_s(64, 90, f"TOTAL TIME : {m:02d}:{sec:02d}", 7)
+      s.text_s(64, 90, f"総プレイ時間 : {m:02d}:{sec:02d}", 7)
 
-      s.text_s(72, 116, "RETURNING TO TITLE...", c)
+      s.text_s(72, 116, "ちょっと待ってね！...", c)
 
 
 Game()
